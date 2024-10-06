@@ -21,7 +21,6 @@ _start:
   mov rcx, qword [buffer.len]
 @@:
   lodsb
-
 .1:
   cmp al, 10
   ja .2
@@ -61,7 +60,6 @@ _start:
   add byte [current_byte], al
 
   jmp .write
-
 .6:
   cmp al, "a"
   jb .continue
@@ -72,7 +70,6 @@ _start:
   sub al, ("a" - 10)
   shl byte [current_byte], 4
   add byte [current_byte], al
-
 .write:
   cmp  byte [flags.write], 1
   jne .next
@@ -98,7 +95,6 @@ _start:
   jnz @b
   jmp .loop
 .end:
-
   mov rax, 60
   mov rdi, 0
   syscall

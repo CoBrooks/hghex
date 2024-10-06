@@ -1,5 +1,5 @@
 AS := fasm
 
 hghex: hghex.s
-	$(AS) hghex.s hghex.o
+	$(AS) hghex.s hghex
 

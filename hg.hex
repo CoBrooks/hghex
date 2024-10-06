@@ -9,15 +9,15 @@
 00                      | ABI version (ignored)
 00 00 00 00 00 00 00    | Padding
 02 00                   | ELF type (executable)
-3e 00                   | ISA (x86-64)
+3E 00                   | ISA (x86-64)
 01 00 00 00             | Version (always 1)
-b0 00 40 00 00 00 00 00 | Entry point addr
+78 00 40 00 00 00 00 00 | Entry point addr
 40 00 00 00 00 00 00 00 | Program header table addr (immediately after header)
 00 00 00 00 00 00 00 00 | Section header table addr (no section table)
 00 00 00 00             | Flags
 40 00                   | Header size (64 bytes)
 38 00                   | Size of program header table entry
-02 00                   | Number of entries in program header table
+01 00                   | Number of entries in program header table
 40 00                   | Size of section header table entry
 00 00                   | Number of entries in section header table
 00 00                   | Section header name entry
@@ -30,117 +30,70 @@ b0 00 40 00 00 00 00 00 | Entry point addr
 00 00 00 00 00 00 00 00 | Offset
 00 00 40 00 00 00 00 00 | Segment virtual address
 00 00 40 00 00 00 00 00 | Segment physical address
-c8 01 00 00 00 00 00 00 | Segment size in file
-c8 01 00 00 00 00 00 00 | Segment size in memory
-00 10 00 00 00 00 00 00 | Aligment
-                        |
-01 00 00 00             | Segment type (LOAD)
-06 00 00 00             | Flags (readable & writeable)
-c8 01 00 00 00 00 00 00 | Offset
-c8 11 40 00 00 00 00 00 | Segment virtual address
-c8 11 40 00 00 00 00 00 | Segment physical address
-0b 01 00 00 00 00 00 00 | Segment size in file
-0b 01 00 00 00 00 00 00 | Segment size in memory
+1F 01 00 00 00 00 00 00 | Segment size in file
+1F 01 00 00 00 00 00 00 | Segment size in memory
 00 10 00 00 00 00 00 00 | Aligment
 
 |-----------------------|
 |  EXECUTABLE SEGMENT   |
 |-----------------------|
+C8 04 00 00             |   enter 4, 0
+C7 45 FC 00 00 00 00    |   mov dword [rbp-4], 0
                         | .loop:
-48 C7 C0 00 00 00 00    |   mov rax, 0
-48 C7 C7 00 00 00 00    |   mov rdi, 0
-48 C7 C6 C8 11 40 00    |   mov rsi, buffer
-48 C7 C2 00 01 00 00    |   mov rdx, buffer.maxlen
-0F 05                   |   syscall
-48 85 C0                |   test rax, rax
-0F 84 E1 00 00 00       |   jz  .end
-48 89 05 EA 11 00 00    |   mov  qword [buffer.len], rax
-48 C7 C6 C8 11 40 00    |   mov rsi, buffer
-48 8B 0D DC 11 00 00    |   mov rcx, qword [buffer.len]
-                        | @@:
-AC                      |   lodsb
-                        | .1:
-3C 0A                   |   cmp al, 10
-77 0C                   |   ja .2
-C6 05 D9 11 00 00 00    |   mov  byte [flags.comment], 0
-E9 AD 00 00 00          |   jmp .continue
-                        | .2:
-80 3D CD 11 00 00 01    |   cmp byte [flags.comment], 1
-0F 84 A0 00 00 00       |   je .continue
-                        | .3:
-3C 7C                   |   cmp  al, "|"
-75 0D                   |   jne .4
-C6 05 BC 11 00 00 01    |   mov byte [flags.comment], 1
-0F 84 8f 00 00 00       |   je .continue
-                        | .4:
-3C 30                   |   cmp al, "0"
-0F 82 87 00 00 00       |   jb .continue
-3C 39                   |   cmp al, "9"
-77 11                   |   ja .5
-2C 30                   |   sub al, "0"
-C0 25 A0 11 00 00 04    |   shl byte [current_byte], 4
-00 05 9A 11 00 00       |   add byte [current_byte], al
-EB 30                   |   jmp .write
-                        | .5:
-3C 41                   |   cmp al, "A"
-72 6E                   |   jb .continue
-3C 46                   |   cmp al, "F"
-77 11                   |   ja .6
-2C 37                   |   sub al, ("A" - 10)
-C0 25 87 11 00 00 04    |   shl byte [current_byte], 4
-00 05 81 11 00 00       |   add byte [current_byte], al
-EB 17                   |   jmp .write
-                        | .6:
-3C 61                   |   cmp al, "a"
-72 55                   |   jb .continue
-3C 66                   |   cmp al, "f"
-77 51                   |   ja .continue
-2C 57                   |   sub al, ("a" - 10)
-C0 25 6E 11 00 00 04    |   shl byte [current_byte], 4
-00 05 68 11 00 00       |   add byte [current_byte], al
-                        | .write:
-80 3D 63 11 00 00 01    |   cmp  byte [flags.write], 1
-75 32                   |   jne .next
-56                      |   push rsi
-51                      |   push rcx
-48 C7 C0 01 00 00 00    |   mov rax, 1
-48 C7 C7 01 00 00 00    |   mov rdi, 1
-48 C7 C6 D0 12 40 00    |   mov rsi, current_byte
+48 31 C0                |   xor rax, rax
+48 31 FF                |   xor rdi, rdi
+48 8D 75 FF             |   lea rsi, byte [rbp-1]
 48 C7 C2 01 00 00 00    |   mov rdx, 1
 0F 05                   |   syscall
-59                      |   pop rcx
-5E                      |   pop rsi
-C6 05 38 11 00 00 00    |   mov byte [flags.write], 0
-C6 05 2F 11 00 00 00    |   mov byte [current_byte], 0
-EB 07                   |   jmp .continue
+84 C0                   |   test al, al
+74 75                   |   jz .end
+8A 45 FF                |   mov al, byte [rbp-1]
+                        | .1:
+3C 0A                   |   cmp al, 10
+77 06                   |   ja .2
+C6 45 FE 00             |   mov  byte [rbp-2], 0
+EB 63                   |   jmp .continue
+                        | .2:
+80 7D FE 01             |   cmp byte [rbp-2], 1
+74 5D                   |   je .continue
+                        | .3:
+3C 7C                   |   cmp  al, "|"
+75 06                   |   jne .4
+C6 45 FE 01             |   mov byte [rbp-2], 1
+74 53                   |   je .continue
+                        | .4:
+3C 30                   |   cmp al, "0"
+72 4F                   |   jb .continue
+3C 39                   |   cmp al, "9"
+77 0B                   |   ja .5
+2C 30                   |   sub al, "0"
+C0 65 FC 04             |   shl byte [rbp-4], 4
+00 45 FC                |   add byte [rbp-4], al
+EB 11                   |   jmp .write
+                        | .5:
+3C 41                   |   cmp al, "A"
+72 3C                   |   jb .continue
+3C 46                   |   cmp al, "F"
+77 38                   |   ja .continue
+2C 37                   |   sub al, ("A" - 10)
+C0 65 FC 04             |   shl byte [rbp-4], 4
+00 45 FC                |   add byte [rbp-4], al
+                        | .write:
+80 7D FD 01             |   cmp  byte [rbp-3], 1
+75 25                   |   jne .next
+48 C7 C0 01 00 00 00    |   mov rax, 1
+48 C7 C7 01 00 00 00    |   mov rdi, 1
+48 8D 75 FC             |   lea rsi, byte [rbp-4]
+48 C7 C2 01 00 00 00    |   mov rdx, 1
+0F 05                   |   syscall
+C6 45 FD 00             |   mov byte [rbp-3], 0
+C6 45 FC 00             |   mov byte [rbp-4], 0
+EB 04                   |   jmp .continue
                         | .next:
-C6 05 28 11 00 00 01    |   mov byte [flags.write], 1
+C6 45 FD 01             |   mov byte [rbp-3], 1
                         | .continue:
-48 FF C9                |   dec rcx
-0F 85 39 FF FF FF       |   jnz @b
-E9 F8 FE FF FF          |   jmp .loop
+E9 74 FF FF FF          |   jmp .loop
                         | .end:
 48 C7 C0 3C 00 00 00    |   mov rax, 60
 48 C7 C7 00 00 00 00    |   mov rdi, 0
 0F 05                   |   syscall
-
-|-----------------------------------------------|
-|                  DATA SEGMENT                 |
-|-----------------------------------------------|
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00  F0 00 00

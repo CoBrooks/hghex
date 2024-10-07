@@ -2,23 +2,23 @@
 |      ELF HEADER       |
 |-----------------------|
 7F 45 4C 46             | ELF magic (0x7F "ELF")
-02                      | 64-bit
+01                      | 32-bit
 01                      | Little endian
 01                      | ELF version (always 1)
 03                      | ABI (Linux)
 00                      | ABI version (ignored)
 00 00 00 00 00 00 00    | Padding
 02 00                   | ELF type (executable)
-3E 00                   | ISA (x86-64)
+03 00                   | ISA (x86)
 01 00 00 00             | Version (always 1)
-78 00 40 00 00 00 00 00 | Entry point addr
-40 00 00 00 00 00 00 00 | Program header table addr (immediately after header)
-00 00 00 00 00 00 00 00 | Section header table addr (no section table)
+54 80 04 08             | Entry point addr
+34 00 00 00             | Program header table addr (immediately after header)
+00 00 00 00             | Section header table addr (no section table)
 00 00 00 00             | Flags
-40 00                   | Header size (64 bytes)
-38 00                   | Size of program header table entry
+34 00                   | Header size (52 bytes)
+20 00                   | Size of program header table entry
 01 00                   | Number of entries in program header table
-40 00                   | Size of section header table entry
+28 00                   | Size of section header table entry
 00 00                   | Number of entries in section header table
 00 00                   | Section header name entry
 
@@ -26,74 +26,74 @@
 |    PROGRAM HEADER     |
 |-----------------------|
 01 00 00 00             | Segment type (LOAD)
+00 00 00 00             | Offset
+00 80 04 08             | Segment virtual address
+00 80 04 08             | Segment physical address
+F1 00 00 00             | Segment size in file
+F1 00 00 00             | Segment size in memory
 05 00 00 00             | Flags (readable & executable)
-00 00 00 00 00 00 00 00 | Offset
-00 00 40 00 00 00 00 00 | Segment virtual address
-00 00 40 00 00 00 00 00 | Segment physical address
-1F 01 00 00 00 00 00 00 | Segment size in file
-1F 01 00 00 00 00 00 00 | Segment size in memory
-00 10 00 00 00 00 00 00 | Aligment
+00 10 00 00             | Aligment
 
 |-----------------------|
 |  EXECUTABLE SEGMENT   |
 |-----------------------|
 C8 04 00 00             |   enter 4, 0
-C7 45 FC 00 00 00 00    |   mov dword [rbp-4], 0
+C7 45 FC 00 00 00 00    |   mov dword [ebp-4], 0
                         | .loop:
-48 31 C0                |   xor rax, rax
-48 31 FF                |   xor rdi, rdi
-48 8D 75 FF             |   lea rsi, byte [rbp-1]
-48 C7 C2 01 00 00 00    |   mov rdx, 1
-0F 05                   |   syscall
+B8 03 00 00 00          |   mov eax, 3
+BB 00 00 00 00          |   mov ebx, 0
+8D 4D FF                |   lea ecx, byte [ebp-1]
+BA 01 00 00 00          |   mov edx, 1
+CD 80                   |   int 80h
 84 C0                   |   test al, al
-74 75                   |   jz .end
-8A 45 FF                |   mov al, byte [rbp-1]
+74 6E                   |   jz .end
+8A 45 FF                |   mov al, byte [ebp-1]
                         | .1:
 3C 0A                   |   cmp al, 10
 77 06                   |   ja .2
-C6 45 FE 00             |   mov  byte [rbp-2], 0
-EB 63                   |   jmp .continue
+C6 45 FE 00             |   mov  byte [ebp-2], 0
+EB 5C                   |   jmp .continue
                         | .2:
-80 7D FE 01             |   cmp byte [rbp-2], 1
-74 5D                   |   je .continue
+80 7D FE 01             |   cmp byte [ebp-2], 1
+74 56                   |   je .continue
                         | .3:
 3C 7C                   |   cmp  al, "|"
 75 06                   |   jne .4
-C6 45 FE 01             |   mov byte [rbp-2], 1
-74 53                   |   je .continue
+C6 45 FE 01             |   mov byte [ebp-2], 1
+74 4C                   |   je .continue
                         | .4:
 3C 30                   |   cmp al, "0"
-72 4F                   |   jb .continue
+72 48                   |   jb .continue
 3C 39                   |   cmp al, "9"
 77 0B                   |   ja .5
 2C 30                   |   sub al, "0"
-C0 65 FC 04             |   shl byte [rbp-4], 4
-00 45 FC                |   add byte [rbp-4], al
+C0 65 FC 04             |   shl byte [ebp-4], 4
+00 45 FC                |   add byte [ebp-4], al
 EB 11                   |   jmp .write
                         | .5:
 3C 41                   |   cmp al, "A"
-72 3C                   |   jb .continue
+72 35                   |   jb .continue
 3C 46                   |   cmp al, "F"
-77 38                   |   ja .continue
+77 31                   |   ja .continue
 2C 37                   |   sub al, ("A" - 10)
-C0 65 FC 04             |   shl byte [rbp-4], 4
-00 45 FC                |   add byte [rbp-4], al
+C0 65 FC 04             |   shl byte [ebp-4], 4
+00 45 FC                |   add byte [ebp-4], al
                         | .write:
-80 7D FD 01             |   cmp  byte [rbp-3], 1
-75 25                   |   jne .next
-48 C7 C0 01 00 00 00    |   mov rax, 1
-48 C7 C7 01 00 00 00    |   mov rdi, 1
-48 8D 75 FC             |   lea rsi, byte [rbp-4]
-48 C7 C2 01 00 00 00    |   mov rdx, 1
-0F 05                   |   syscall
-C6 45 FD 00             |   mov byte [rbp-3], 0
-C6 45 FC 00             |   mov byte [rbp-4], 0
+80 7D FD 01             |   cmp  byte [ebp-3], 1
+75 1E                   |   jne .next
+B8 04 00 00 00          |   mov eax, 4
+BB 01 00 00 00          |   mov ebx, 1
+8D 4D FC                |   lea ecx, byte [ebp-4]
+BA 01 00 00 00          |   mov edx, 1
+CD 80                   |   int 80h
+C6 45 FD 00             |   mov byte [ebp-3], 0
+C6 45 FC 00             |   mov byte [ebp-4], 0
 EB 04                   |   jmp .continue
                         | .next:
-C6 45 FD 01             |   mov byte [rbp-3], 1
+C6 45 FD 01             |   mov byte [ebp-3], 1
                         | .continue:
-E9 74 FF FF FF          |   jmp .loop
+E9 7A FF FF FF          |   jmp .loop
                         | .end:
-48 C7 C0 3C 00 00 00    |   mov rax, 60
-48 C7 C7 00 00 00 00    |   mov rdi, 0
-0F 05                   |   syscall
+B8 01 00 00 00          |   mov eax, 60
+BB 00 00 00 00          |   mov edi, 0
+CD 80                   |   syscall
